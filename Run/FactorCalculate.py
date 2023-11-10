@@ -65,7 +65,6 @@ def main():
             print(f"\033[1;31m{dt.datetime.now().strftime('%X')}: {factor_dict['factor_name']}\033[0m")
             db = 'Fin'
             cal_factor(factor_dict, db)
-    pass
 
 
 def main1(fact_dict):
@@ -120,7 +119,7 @@ def main_M():
     pam = [5, 15, 30, 60]
 
     pool = Pool(processes=4)
-    for key_, value_ in fac_dict.items():
+    for value_ in fac_dict.values():
         pool.apply_async(cal, (value_, pam))
     # pool.apply_async(cal_pa, (dd, pam))
     pool.close()

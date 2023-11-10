@@ -1334,8 +1334,12 @@ class FundamentalGrowthFactor(FactorBase):
         if sum(np.isnan(x)) > 0:
             return np.nan
         try:
-            X = pd.DataFrame(data={"T2": [i ** 2 for i in range(1, len(x) + 1)],
-                                   "T": [i for i in range(1, len(x) + 1)]})
+            X = pd.DataFrame(
+                data={
+                    "T2": [i**2 for i in range(1, len(x) + 1)],
+                    "T": list(range(1, len(x) + 1)),
+                }
+            )
             Y = pd.Series(x)
             X = sm.add_constant(X)
             reg = sm.OLS(Y, X).fit()

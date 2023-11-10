@@ -992,9 +992,7 @@ class TechnicalHighFrequencyFactor(FactorBase):
                                        "15:00": '4hPrice_index',
                                        "open": 'open_index'}, inplace=True)
 
-        data_raw = pd.merge(data_s, data_index_new, on='date', how='left')
-
-        return data_raw
+        return pd.merge(data_s, data_index_new, on='date', how='left')
 
     @classmethod
     def HighFreq057_data_raw(cls):
@@ -1010,10 +1008,7 @@ class TechnicalHighFrequencyFactor(FactorBase):
                                stock_id='code')
         data.rename(columns={'code': 'stock_id'}, inplace=True)
 
-        # 2h 数据存在异常
-        data_s = data[~((data['2hPrice'] == 0) | (np.isnan(data['2hPrice'])))]
-
-        return data_s
+        return data[~((data['2hPrice'] == 0) | (np.isnan(data['2hPrice'])))]
 
     @classmethod
     def HighFreq059_data_raw(cls):
@@ -1230,24 +1225,22 @@ class TechnicalHighFrequencyFactor(FactorBase):
                          window: int = 20) -> pd.Series:
         print(reg_.index[0])
         if len(reg_) <= window:
-            res = pd.Series(index=reg_.index)
-        else:
-            reg_object_am = PandasRollingOLS(x=reg_[x1],
-                                             y=reg_[y1],
-                                             has_const=has_const,
-                                             use_const=use_const,
-                                             window=window)
+            return pd.Series(index=reg_.index)
+        reg_object_am = PandasRollingOLS(x=reg_[x1],
+                                         y=reg_[y1],
+                                         has_const=has_const,
+                                         use_const=use_const,
+                                         window=window)
 
-            reg_object_pm = PandasRollingOLS(x=reg_[x2],
-                                             y=reg_[y2],
-                                             has_const=has_const,
-                                             use_const=use_const,
-                                             window=window)
+        reg_object_pm = PandasRollingOLS(x=reg_[x2],
+                                         y=reg_[y2],
+                                         has_const=has_const,
+                                         use_const=use_const,
+                                         window=window)
 
-            diff_resids = reg_object_am._resids - reg_object_pm._resids
-            stat = np.nanmean(diff_resids, axis=1) / np.nanstd(diff_resids, axis=1, ddof=1) * np.sqrt(window)
-            res = pd.Series(stat, index=reg_object_am.index[window - 1:])
-        return res
+        diff_resids = reg_object_am._resids - reg_object_pm._resids
+        stat = np.nanmean(diff_resids, axis=1) / np.nanstd(diff_resids, axis=1, ddof=1) * np.sqrt(window)
+        return pd.Series(stat, index=reg_object_am.index[window - 1:])
 
     @staticmethod
     def _reg(d: pd.DataFrame,
@@ -1257,12 +1250,10 @@ class TechnicalHighFrequencyFactor(FactorBase):
         d_sub_ = d.dropna(how='any').sort_index()
 
         if d_sub_.shape[0] < d_sub_.shape[1]:
-            Residual = pd.Series(data=np.nan, index=d.index)
-        else:
-            X, Y = d_sub_[x_name].to_frame(), d_sub_[y_name]
-            reg = np.linalg.lstsq(X, Y)
-            Residual = Y - (reg[0] * X).sum(axis=1)
-        return Residual
+            return pd.Series(data=np.nan, index=d.index)
+        X, Y = d_sub_[x_name].to_frame(), d_sub_[y_name]
+        reg = np.linalg.lstsq(X, Y)
+        return Y - (reg[0] * X).sum(axis=1)
 
     @staticmethod
     def func_M_sqrt(data: pd.DataFrame):
@@ -1273,9 +1264,14 @@ class TechnicalHighFrequencyFactor(FactorBase):
         data_copy.sort_values('S', ascending=False, inplace=True)
         data_copy['cum_volume_R'] = data_copy['volume'].cumsum() / sum(data_copy['volume'])
         data_copy_ = data_copy[data_copy['cum_volume_R'] <= 0.2]
-        res = sum(data_copy_['close'] * data_copy_['volume'] / sum(data_copy_['volume'])) / VWAP
-
-        return res
+        return (
+            sum(
+                data_copy_['close']
+                * data_copy_['volume']
+                / sum(data_copy_['volume'])
+            )
+            / VWAP
+        )
 
     @staticmethod
     def func_M_ln(data: pd.DataFrame):
@@ -1285,9 +1281,14 @@ class TechnicalHighFrequencyFactor(FactorBase):
         data_copy.sort_values('S', ascending=False, inplace=True)
         data_copy['cum_volume_R'] = data_copy['volume'].cumsum() / sum(data_copy['volume'])
         data_copy_ = data_copy[data_copy['cum_volume_R'] <= 0.2]
-        res = sum(data_copy_['close'] * data_copy_['volume'] / sum(data_copy_['volume'])) / VWAP
-
-        return res
+        return (
+            sum(
+                data_copy_['close']
+                * data_copy_['volume']
+                / sum(data_copy_['volume'])
+            )
+            / VWAP
+        )
 
     @staticmethod
     def func_Structured_reversal(data: pd.DataFrame,
@@ -1314,7 +1315,7 @@ class TechnicalHighFrequencyFactor(FactorBase):
         print(d.index[0][1])
         d['ret_cum'] = d[cut_name].rolling(n).sum()
         for i in range(1, n):
-            d[rank_name + f"_{i}"] = d[rank_name].shift(i)
+            d[f"{rank_name}_{i}"] = d[rank_name].shift(i)
 
         C = [c_ for c_ in d.columns if rank_name in c_]
         J = d[C].ge(d[C].median(axis=1), axis=0)
@@ -1336,8 +1337,7 @@ class TechnicalHighFrequencyFactor(FactorBase):
         data_copy = data.copy(deep=True)
         # 注意时间切片：左闭右开
         data_copy_sub = data_copy[(data_copy['time'] >= time_star) & (data_copy['time'] < time_end)]
-        res = data_copy_sub['volume'].sum() / data_copy['volume'].sum()
-        return res
+        return data_copy_sub['volume'].sum() / data_copy['volume'].sum()
 
     # 半衰权重
     @staticmethod
@@ -1346,9 +1346,7 @@ class TechnicalHighFrequencyFactor(FactorBase):
 
         weight_list = [pow(2, (i - period - 1) / decay) for i in range(1, period + 1)]
 
-        weight_1 = [i / sum(weight_list) for i in weight_list]
-
-        return weight_1
+        return [i / sum(weight_list) for i in weight_list]
 
     # 信息熵
     @staticmethod
@@ -1361,8 +1359,7 @@ class TechnicalHighFrequencyFactor(FactorBase):
         """
         Probability = (x.groupby(x).count()).div(len(x))
         log2 = np.log(Probability) / np.log(bottom)
-        result = - sum(Probability * log2)
-        return result
+        return - sum(Probability * log2)
 
 
 if __name__ == '__main__':
@@ -1374,11 +1371,3 @@ if __name__ == '__main__':
 
     A = TechnicalHighFrequencyFactor()
     A.HighFreq056_data_raw()
-    #
-    # # Data cleaning:Restoration stock price [open, high, low, close]
-    # price_columns = ['open', 'close', 'high', 'low']
-    # df_stock.set_index('date', inplace=True)
-    # df_stock[price_columns] = df_stock[price_columns].multiply(df_stock['adjfactor'], axis=0)
-    # A = MomentFactor()
-    # A.momentum_in_day(df_stock)
-    pass

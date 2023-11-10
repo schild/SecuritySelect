@@ -39,5 +39,3 @@ class HighFrequencyHighFreqFactor(FactorBase):
 
 
 
-if __name__ == '__main__':
-    pass

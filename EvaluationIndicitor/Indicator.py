@@ -25,8 +25,7 @@ class Indicator(object):
 
     # 累计收益率
     def accumulative_return(self, nav: pd.Series):
-        ret = np.log(nav[-1] / nav[0])
-        return ret
+        return np.log(nav[-1] / nav[0])
 
     # 年化累计收益率
     def return_a(self, nav: pd.Series, freq: str = 'D'):
@@ -38,26 +37,22 @@ class Indicator(object):
         if period == 0:
             return 0
         else:
-            ret_a = np.exp(self.accumulative_return(nav)) ** (self.cycle[freq] / period)
-            return ret_a
+            return np.exp(self.accumulative_return(nav)) ** (self.cycle[freq] / period)
 
     def odds(self, nav: pd.Series, bm: pd.Series) -> float:
 
         return sum(nav > bm) / len(nav)
 
     def std_a(self, nav: pd.Series, freq: str = 'D') -> float:
-        std_a = np.std(nav, ddof=1) * (self.cycle[freq] ** .5)
-        return std_a
+        return np.std(nav, ddof=1) * (self.cycle[freq] ** .5)
 
     def max_retreat(self, nav: pd.Series):
         # 回撤结束时间点
         i = (nav.cummax() - nav).idxmax()
         # 回撤开始的时间点
         j = (nav[:i]).idxmax()
-        x = (float(nav[i]) / nav[j]) - 1
-        return x
+        return (float(nav[i]) / nav[j]) - 1
 
 
     def shape_a(self, nav: pd.Series, freq: str = "D") -> float:
-        shape_a = (self.return_a(nav, freq=freq) - 0.03) / self.std_a(nav, freq="D")
-        return shape_a
+        return (self.return_a(nav, freq=freq) - 0.03) / self.std_a(nav, freq="D")

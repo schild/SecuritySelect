@@ -45,13 +45,7 @@ class RiskModel(object):
         #  Eigenvalue adjustment
         F_NW = annual * (F_Raw + matrix_orders)
 
-        # 特征值调整
-        F_Eigen = self.eigenvalue_adj(F_NW, period=120, M=100)
-
-        # Volatility bias adjustment  TODO
-        # F = self.vol_bias_adj(F_Eigen)
-        F = F_Eigen
-        return F
+        return self.eigenvalue_adj(F_NW, period=120, M=100)
 
     # 特异性收益协方差矩阵预测
     def forecast_cov_spec(self,
@@ -93,14 +87,7 @@ class RiskModel(object):
         #  Structural adjustment
         F_STR = self.structural_adj(F_NW, spec_ret_eff, fact_exp, liq_mv.iloc[:, 0], liq_mv_name)
 
-        # Bayesian compression adjustment
-        F_SH = self.Bayesian_compression(F_STR, liq_mv.iloc[:, 0], liq_mv_name)
-
-        # 波动率偏误调整  TODO
-
-        # 非对角矩阵替换为0
-
-        return F_SH
+        return self.Bayesian_compression(F_STR, liq_mv.iloc[:, 0], liq_mv_name)
 
     # 指数加权协方差矩阵计算
     def exp_weight_cov(self,
@@ -111,9 +98,11 @@ class RiskModel(object):
         w_list = self.Half_time(period=data.shape[0], decay=decay)
         w_list = sorted(w_list, reverse=False)  # 升序排列
 
-        cov_w = pd.DataFrame(np.cov(data.T, aweights=w_list), index=data.columns, columns=data.columns)
-
-        return cov_w
+        return pd.DataFrame(
+            np.cov(data.T, aweights=w_list),
+            index=data.columns,
+            columns=data.columns,
+        )
 
     # 自相关协方差矩阵
     def auto_cor_cov(self,
@@ -152,11 +141,11 @@ class RiskModel(object):
         w_list = sorted(w_list, reverse=False)  # 升序排列
 
         covs = np.cov(matrix.T, matrix_order.T, aweights=w_list)  # 需要再测试
-        cov_order = pd.DataFrame(covs[: -matrix.shape[1], -matrix.shape[1]:],
-                                 index=matrix.columns,
-                                 columns=matrix.columns)
-
-        return cov_order
+        return pd.DataFrame(
+            covs[: -matrix.shape[1], -matrix.shape[1] :],
+            index=matrix.columns,
+            columns=matrix.columns,
+        )
 
     # 特征值调整
     def eigenvalue_adj(self,
@@ -181,7 +170,7 @@ class RiskModel(object):
 
         # 蒙特卡洛模拟
         eigenvalue_bias = []
-        for i in range(M):
+        for _ in range(M):
             S = np.random.randn(len(e_vals), period)  # 模拟的特征组合收益率矩阵, 收益期数怎么定 TODO
             f = np.dot(U0, S)  # 模拟的收益率矩阵
             F = np.cov(f)  # 模拟的收益率协方差矩阵
@@ -198,11 +187,11 @@ class RiskModel(object):
         gam = (np.sqrt(gam_ / M) - 1) * alpha + 1
         gam[np.isnan(gam)] = 0
 
-        F_Eigen = pd.DataFrame(np.dot(np.dot(U0, np.dot(gam ** 2, D0)), np.linalg.inv(U0)),
-                               index=data.columns,
-                               columns=data.columns)
-
-        return F_Eigen
+        return pd.DataFrame(
+            np.dot(np.dot(U0, np.dot(gam**2, D0)), np.linalg.inv(U0)),
+            index=data.columns,
+            columns=data.columns,
+        )
 
     # 结构化调整
     def structural_adj(self,
@@ -254,10 +243,7 @@ class RiskModel(object):
                                  index=fact_exp.index,
                                  columns=fact_exp.index)
 
-        # 对特异收益矩阵进行结构化调整
-        F_STR = sigma_STR.mul((1 - gam_n), axis=0) + cov.mul(gam_n, axis=0)
-
-        return F_STR
+        return sigma_STR.mul((1 - gam_n), axis=0) + cov.mul(gam_n, axis=0)
 
     # 贝叶斯压缩
     def Bayesian_compression(self,
@@ -307,9 +293,11 @@ class RiskModel(object):
 
         # 调整后的特异波动
         sigma_SH = df_N2['V_n'] * df_N2['sigma_n_weight'] + (1 - df_N2['V_n']) * df_N2['sigma_n']
-        F_SH = pd.DataFrame(np.diag(np.array(sigma_SH)), index=sigma_SH.index, columns=sigma_SH.index)
-
-        return F_SH
+        return pd.DataFrame(
+            np.diag(np.array(sigma_SH)),
+            index=sigma_SH.index,
+            columns=sigma_SH.index,
+        )
 
     # 半衰权重
     @staticmethod
@@ -317,6 +305,4 @@ class RiskModel(object):
 
         weight_list = [pow(2, (i - period - 1) / decay) for i in range(1, period + 1)]
 
-        weight_1 = [i / sum(weight_list) for i in weight_list]
-
-        return weight_1
+        return [i / sum(weight_list) for i in weight_list]

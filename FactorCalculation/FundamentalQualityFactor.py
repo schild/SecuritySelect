@@ -237,5 +237,3 @@ class FundamentalQualityFactor(FactorBase):  # TODO 修改
         return cls.Quality008_data_raw(sta, end, f_type)
 
 
-if __name__ == '__main__':
-    pass

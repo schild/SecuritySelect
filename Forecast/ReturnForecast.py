@@ -33,8 +33,7 @@ class ReturnModel(object):
         :param rolling: 滚动周期
         :return:
         """
-        fore_ret = data.rolling(rolling).mean().dropna()
-        return fore_ret
+        return data.rolling(rolling).mean().dropna()
 
     # 指数加权移动平均法
     def EWMA(self,
@@ -48,8 +47,7 @@ class ReturnModel(object):
         :param alpha: 当期权重，前一期权重为1-alpha
         :return:
         """
-        fore_ret = data.ewm(com=1 / alpha - 1, adjust=False).mean()
-        return fore_ret
+        return data.ewm(com=1 / alpha - 1, adjust=False).mean()
 
     # 时间序列模型
     def Time_series(self,
@@ -58,8 +56,7 @@ class ReturnModel(object):
                     AR_q: int = 1,
                     MA_p: int = 1,
                     **kwargs):
-        fore_ret = data.rolling(rolling).apply(lambda x: self._ARMA(x, AR_q, MA_p))
-        return fore_ret
+        return data.rolling(rolling).apply(lambda x: self._ARMA(x, AR_q, MA_p))
 
     # TODO 待研究
     def _ARMA(self, data: pd.Series, AR_q: int = 1, MA_p: int = 1):

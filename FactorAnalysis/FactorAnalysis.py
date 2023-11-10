@@ -183,7 +183,7 @@ class FactorValidityCheck(object):
         :return:
         """
         # Load stock pool
-        if stock_pool_name == '':
+        if not stock_pool_name:
             print(f"{dt.datetime.now().strftime('%X')}: Can not load stock pool!")
         else:
             try:
@@ -197,7 +197,7 @@ class FactorValidityCheck(object):
                 self.data_input['StockPool'] = effect_stock
 
         # Load label pool
-        if label_pool_name == '':
+        if not label_pool_name:
             print(f"{dt.datetime.now().strftime('%X')}: Can not load label pool!")
         else:
             try:
@@ -226,7 +226,9 @@ class FactorValidityCheck(object):
             # self.db.query_factor_data("EP_ttm", "Fin")
             if kwargs['cal']:
                 try:
-                    fact_raw_data = self.Factor.factor[fact_name + '_data_raw'](**kwargs['factor_params'])  # TODO
+                    fact_raw_data = self.Factor.factor[f'{fact_name}_data_raw'](
+                        **kwargs['factor_params']
+                    )
                     self.data_input["factor_raw_data"] = fact_raw_data
                 except Exception as e:
                     print(e)
@@ -705,14 +707,6 @@ class FactorValidityCheck(object):
 
         return
 
-        factor_generator = encapsulation(factor)
-
-        # if self.db.check_factor_data(self.fact_name, db_name):
-        #     print(f"This field '{self.fact_name}' exists in MySQL database 'dbfactordata' and will be overwritten")
-        # else:
-        print(f"Factor: '{self.fact_name}' is going to be written to MySQL database 'dbfactordata'")
-        self.db.save_factor_data(factor_generator, db_name)
-
     @timer
     def factor_to_csv(self):
 
@@ -855,53 +849,55 @@ class FactorValidityCheck(object):
         shape_a = self.ind.shape_a(nav, freq=freq)
         max_retreat = self.ind.max_retreat(nav)
 
-        test_indicators = pd.Series([ret_a, std_a, shape_a, max_retreat],
-                                    index=['ret_a', 'std_a', 'shape_a', 'max_retreat'],
-                                    name=self.fact_name)
-        return test_indicators
+        return pd.Series(
+            [ret_a, std_a, shape_a, max_retreat],
+            index=['ret_a', 'std_a', 'shape_a', 'max_retreat'],
+            name=self.fact_name,
+        )
 
     # Series additional written
     def to_csv(self, path: str, file_name: str, data_: pd.Series):
-        data_path_ = os.path.join(path, file_name + '.csv')
+        data_path_ = os.path.join(path, f'{file_name}.csv')
         data_df = data_.to_frame().T
 
-        header = False if os.path.exists(data_path_) else True
+        header = not os.path.exists(data_path_)
 
         data_df.to_csv(data_path_, mode='a', header=header)
 
-    def _reg_fact_return(self, data_: pd.DataFrame, num: int = 150) -> object or None:  # TODO 考虑回归失败
+    def _reg_fact_return(self, data_: pd.DataFrame, num: int = 150) -> object or None:    # TODO 考虑回归失败
         """
         需要考虑个股收益波动较大带来的问题，对收益率进行去极值，极端值对最小二乘法影响较大，去除极值会使得回归系数相对平稳点
         返回回归类
         """
         data_sub = data_.sort_index().dropna(how='any')
-        # print(f"有效样本量{data_sub.shape[0]}")
         if data_sub.shape[0] < num:
-            res = pd.Series(index=['T', 'factor_return'])
-        else:
-            # if data_sub.index[0][0] in ['2015-03-23']:
-            #     print('s')
-            # data_sub = data_sub[data_sub[KN.STOCK_RETURN.value] <= 0.09]
-            # data_sub_ = data_sub[KN.STOCK_RETURN.value]
-            data_sub[KN.STOCK_RETURN.value] = self.factor_process.mad(data_sub[KN.STOCK_RETURN.value])
-            # data_sub['return'] = self.factor_process.z_score(data_sub['return'])
-            data_sub = data_sub.dropna()
+            return pd.Series(index=['T', 'factor_return'])
+        # if data_sub.index[0][0] in ['2015-03-23']:
+        #     print('s')
+        # data_sub = data_sub[data_sub[KN.STOCK_RETURN.value] <= 0.09]
+        # data_sub_ = data_sub[KN.STOCK_RETURN.value]
+        data_sub[KN.STOCK_RETURN.value] = self.factor_process.mad(data_sub[KN.STOCK_RETURN.value])
+        # data_sub['return'] = self.factor_process.z_score(data_sub['return'])
+        data_sub = data_sub.dropna()
 
-            mv = data_sub[PVN.LIQ_MV.value]
-            d_ = data_sub.loc[:, data_sub.columns != PVN.LIQ_MV.value]
-            X = pd.get_dummies(d_.loc[:, d_.columns != KN.STOCK_RETURN.value],
-                               columns=[SN.INDUSTRY_FLAG.value])
-            # Y = np.sign(d_[KN.STOCK_RETURN.value]) * np.log(abs(d_[KN.STOCK_RETURN.value]))
-            # Y.fillna(0, inplace=True)
-            Y = d_[KN.STOCK_RETURN.value]
-            reg = sm.WLS(Y, X, weights=pow(mv, 0.5)).fit(cov_type='HC1')  # 流通市值平方根加权
+        mv = data_sub[PVN.LIQ_MV.value]
+        d_ = data_sub.loc[:, data_sub.columns != PVN.LIQ_MV.value]
+        X = pd.get_dummies(d_.loc[:, d_.columns != KN.STOCK_RETURN.value],
+                           columns=[SN.INDUSTRY_FLAG.value])
+        # Y = np.sign(d_[KN.STOCK_RETURN.value]) * np.log(abs(d_[KN.STOCK_RETURN.value]))
+        # Y.fillna(0, inplace=True)
+        Y = d_[KN.STOCK_RETURN.value]
+        reg = sm.WLS(Y, X, weights=pow(mv, 0.5)).fit(cov_type='HC1')  # 流通市值平方根加权
             # reg = sm.OLS(Y, X).fit(cov_type='HC2')
 
-            if np.isnan(reg.rsquared_adj):
-                res = pd.Series(index=['T', 'factor_return'])
-            else:
-                res = pd.Series([reg.tvalues[self.fact_name], reg.params[self.fact_name]], index=['T', 'factor_return'])
-        return res
+        return (
+            pd.Series(index=['T', 'factor_return'])
+            if np.isnan(reg.rsquared_adj)
+            else pd.Series(
+                [reg.tvalues[self.fact_name], reg.params[self.fact_name]],
+                index=['T', 'factor_return'],
+            )
+        )
 
     @staticmethod
     def _holding_return(ret: pd.Series,
@@ -1035,9 +1031,7 @@ class FactorValidityCheck(object):
 
             res_cont_.append(data_copy_)
 
-        res_ = reduce(lambda x, y: x + y, res_cont_).div(hp).fillna(0)
-
-        return res_
+        return reduce(lambda x, y: x + y, res_cont_).div(hp).fillna(0)
 
 
 # 多因子相关性分析
@@ -1133,7 +1127,6 @@ class FactorCollinearity(object):
         COR = self.Multi.correlation(self.factors_raw)
 
         print('S')
-        pass
 
     #  因子合成
     def factor_synthetic(self,
@@ -1181,9 +1174,7 @@ class FactorCollinearity(object):
         for fact_ in factor_copy.columns:
             if self.factor_D[fact_] == '-':
                 factor_copy[fact_] = - factor_copy[fact_]
-            elif self.factor_D[fact_] == '+':
-                pass
-            else:
+            elif self.factor_D[fact_] != '+':
                 print(f"{fact_}因子符号有误！")
                 return
 
@@ -1191,11 +1182,7 @@ class FactorCollinearity(object):
 
         factor_copy = factor_copy.apply(self.fp.standardization, args=(stand_method, ))
 
-        comp_factor = self.Multi.composite(factor=factor_copy,
-                                           method=method,
-                                           **kwargs)
-
-        return comp_factor
+        return self.Multi.composite(factor=factor_copy, method=method, **kwargs)
 
     def factor_ret_from_sql(self,
                             factor_name: tuple,
@@ -1204,12 +1191,13 @@ class FactorCollinearity(object):
                             ret_type: str = 'Pearson',
                             hp: int = 1):
 
-        fact_ret_sql = self.db.query_factor_ret_data(factor_name=factor_name,
-                                                     sta_date=sta_date,
-                                                     end_date=end_date,
-                                                     ret_type=ret_type,
-                                                     hp=hp)
-        return fact_ret_sql
+        return self.db.query_factor_ret_data(
+            factor_name=factor_name,
+            sta_date=sta_date,
+            end_date=end_date,
+            ret_type=ret_type,
+            hp=hp,
+        )
 
 
 if __name__ == '__main__':

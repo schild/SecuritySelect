@@ -38,11 +38,7 @@ class FundamentalProfitFactor(FactorBase):
         data[func_name] = data[net_profit_in] / data[total_asset]
         data[func_name][np.isinf(data[func_name])] = np.nan
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data.reset_index(inplace=True)
 
         F = FactorInfo()
@@ -78,11 +74,7 @@ class FundamentalProfitFactor(FactorBase):
         data['ROA_Q'][np.isinf(data['ROA_Q'])] = np.nan
         data[func_name] = data['ROA_Q'].groupby(KN.STOCK_ID.value).diff(1)
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data.reset_index(inplace=True)
 
         F = FactorInfo()
@@ -120,11 +112,7 @@ class FundamentalProfitFactor(FactorBase):
         data[func_name] = data['RE'] / data[net_profit_in]
         data = data.reset_index()
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -153,11 +141,7 @@ class FundamentalProfitFactor(FactorBase):
         data[func_name] = data[net_profit_in] / data[operator_income]
         data[np.isinf(data[func_name])] = 0
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -191,11 +175,7 @@ class FundamentalProfitFactor(FactorBase):
         data[func_name] = data[net_profit_in] / data[operator_income]
         data[np.isinf(data[func_name])] = 0
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -228,11 +208,7 @@ class FundamentalProfitFactor(FactorBase):
         data[func_name] = data[operator_profit] / data[total_operator_income]
         data[np.isinf(data[func_name])] = 0
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -266,11 +242,7 @@ class FundamentalProfitFactor(FactorBase):
         data[func_name] = data[operator_profit] / data[total_operator_income]
         data[np.isinf(data[func_name])] = 0
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -305,11 +277,7 @@ class FundamentalProfitFactor(FactorBase):
         data[np.isinf(data['NP'])] = 0
         data[func_name] = data['NP'].groupby(KN.STOCK_ID.value).diff(1)
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()

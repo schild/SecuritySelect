@@ -49,15 +49,13 @@ def init_mysql(settings: dict):
     settings = {k: v for k, v in settings.items() if k in keys}
     global MySQL_con
     MySQL_con = pymysql.connect(**settings)
-    db = MySQLDatabase(**settings)
-    return db
+    return MySQLDatabase(**settings)
 
 
 def init_postgresql(settings: dict):
     keys = {"database", "user", "password", "host", "port"}
     settings = {k: v for k, v in settings.items() if k in keys}
-    db = PostgresqlDatabase(**settings)
-    return db
+    return PostgresqlDatabase(**settings)
 
 
 class ModelBase(Model):
@@ -67,6 +65,9 @@ class ModelBase(Model):
 
 
 def init_models(db: Database, driver: Driver):
+
+
+
     class DBFactorRetData(ModelBase):
         """
                 Candlestick bar data for database storage.
@@ -113,8 +114,7 @@ def init_models(db: Database, driver: Driver):
             """
             Generate GroupData object from DbGroupData.
             """
-            Ret = FactorRetData()
-            return Ret
+            return FactorRetData()
 
         @staticmethod
         def save_all(objs: List["DBFactorRetData"]):
@@ -152,6 +152,9 @@ def init_models(db: Database, driver: Driver):
                          f"AND str_to_date('{end_date}', '%Y-%m-%d') "
             res = pd.read_sql(factor_sql, con=MySQL_con)
             return None if res.empty else res
+
+
+
 
     class DbFactorGroupData(ModelBase):
         """
@@ -207,8 +210,7 @@ def init_models(db: Database, driver: Driver):
             """
             Generate GroupData object from DbGroupData.
             """
-            group = GroupData()
-            return group
+            return GroupData()
 
         @staticmethod
         def save_all(objs: List["DbFactorGroupData"]):
@@ -229,6 +231,9 @@ def init_models(db: Database, driver: Driver):
                 else:
                     for c in chunked(dicts, 5000):
                         DbFactorGroupData.insert_many(c).on_conflict_replace().execute()
+
+
+
 
     class DbFactFinData(ModelBase):
         """
@@ -279,8 +284,7 @@ def init_models(db: Database, driver: Driver):
             """
             Generate GroupData object from DbGroupData.
             """
-            factor = FactorData()
-            return factor
+            return FactorData()
 
         @staticmethod
         def save_all(objs: List[ModelBase], DataClass: ModelBase):
@@ -315,6 +319,7 @@ def init_models(db: Database, driver: Driver):
             res = pd.read_sql(factor_sql, con=MySQL_con)
             return None if res.empty else res
 
+
     class DBFactMTMData(DbFactFinData):
         pass
 
@@ -330,13 +335,13 @@ def init_models(db: Database, driver: Driver):
     db.create_tables([DBFactMTMData])
     db.create_tables([DBFactGenProData])
 
-    mapping = {"Ret": DBFactorRetData,
-               "Group": DbFactorGroupData,
-               "Fin": DbFactFinData,
-               "MTM": DBFactMTMData,
-               "GenPro": DBFactGenProData}
-
-    return mapping
+    return {
+        "Ret": DBFactorRetData,
+        "Group": DbFactorGroupData,
+        "Fin": DbFactFinData,
+        "MTM": DBFactMTMData,
+        "GenPro": DBFactGenProData,
+    }
 
 
 class SqlManager(BaseDatabaseManager):
@@ -383,17 +388,17 @@ class SqlManager(BaseDatabaseManager):
     def check_group_data(self, factor_name: str):
         model = getattr(self, "Group")
         data_object = model.select().where(model.factor_name == factor_name)
-        return False if data_object.__len__() == 0 else True
+        return data_object.__len__() != 0
 
     def check_factor_data(self, factor_name: str, db_name: str):
         model = getattr(self, db_name)
         data_object = model.select().where(model.factor_name == factor_name)
-        return False if data_object.__len__() == 0 else True
+        return data_object.__len__() != 0
 
     def check_fact_ret_data(self, factor_name: str):
         model = getattr(self, "Ret")
         data_object = model.select().where(model.factor_name == factor_name)
-        return False if data_object.__len__() == 0 else True
+        return data_object.__len__() != 0
 
     # Clear existing fields
     def clean(self, factor_name: str):

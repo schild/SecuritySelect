@@ -1233,9 +1233,7 @@ class HighFrequencyDistributionFactor(FactorBase):
                                        "15:00": '4hPrice_index',
                                        "open": 'open_index'}, inplace=True)
 
-        data_raw = pd.merge(data_s, data_index_new, on='date', how='left')
-
-        return data_raw
+        return pd.merge(data_s, data_index_new, on='date', how='left')
 
     @classmethod
     def Distribution029_data_raw(cls,
@@ -1253,10 +1251,7 @@ class HighFrequencyDistributionFactor(FactorBase):
                                stock_id='code')
         data.rename(columns={'code': 'stock_id'}, inplace=True)
 
-        # 2h 数据存在异常
-        data_s = data[~((data['2hPrice'] == 0) | (np.isnan(data['2hPrice'])))]
-
-        return data_s
+        return data[~((data['2hPrice'] == 0) | (np.isnan(data['2hPrice'])))]
 
     @classmethod
     def Distribution031_data_raw(cls,
@@ -1273,26 +1268,23 @@ class HighFrequencyDistributionFactor(FactorBase):
                          has_const: bool = False,
                          use_const: bool = True,
                          window: int = 20) -> pd.Series:
-        # print(reg_.index[0])
         if len(reg_) <= window:
-            res = pd.Series(index=reg_.index)
-        else:
-            reg_object_am = PandasRollingOLS(x=reg_[x1],
-                                             y=reg_[y1],
-                                             has_const=has_const,
-                                             use_const=use_const,
-                                             window=window)
+            return pd.Series(index=reg_.index)
+        reg_object_am = PandasRollingOLS(x=reg_[x1],
+                                         y=reg_[y1],
+                                         has_const=has_const,
+                                         use_const=use_const,
+                                         window=window)
 
-            reg_object_pm = PandasRollingOLS(x=reg_[x2],
-                                             y=reg_[y2],
-                                             has_const=has_const,
-                                             use_const=use_const,
-                                             window=window)
+        reg_object_pm = PandasRollingOLS(x=reg_[x2],
+                                         y=reg_[y2],
+                                         has_const=has_const,
+                                         use_const=use_const,
+                                         window=window)
 
-            diff_resids = reg_object_am._resids - reg_object_pm._resids
-            stat = np.nanmean(diff_resids, axis=1) / np.nanstd(diff_resids, axis=1, ddof=1) * np.sqrt(window)
-            res = pd.Series(stat, index=reg_object_am.index[window - 1:])
-        return res
+        diff_resids = reg_object_am._resids - reg_object_pm._resids
+        stat = np.nanmean(diff_resids, axis=1) / np.nanstd(diff_resids, axis=1, ddof=1) * np.sqrt(window)
+        return pd.Series(stat, index=reg_object_am.index[window - 1:])
 
     # 信息熵
     @staticmethod
@@ -1306,8 +1298,7 @@ class HighFrequencyDistributionFactor(FactorBase):
         """
         Probability = (x.groupby(x).count()).div(len(x))
         log2 = np.log(Probability) / np.log(bottom)
-        result = - (Probability * log2).sum()
-        return result
+        return - (Probability * log2).sum()
 
     @staticmethod
     def _reg(d: pd.DataFrame,
@@ -1317,16 +1308,13 @@ class HighFrequencyDistributionFactor(FactorBase):
         d_sub_ = d.dropna(how='any').sort_index()
 
         if d_sub_.shape[0] < d_sub_.shape[1]:
-            Residual = pd.Series(data=np.nan, index=d.index)
-        else:
-            X, Y = d_sub_[x_name].to_frame(), d_sub_[y_name]
-            reg = np.linalg.lstsq(X, Y)
-            Residual = Y - (reg[0] * X).sum(axis=1)
-        return Residual
+            return pd.Series(data=np.nan, index=d.index)
+        X, Y = d_sub_[x_name].to_frame(), d_sub_[y_name]
+        reg = np.linalg.lstsq(X, Y)
+        return Y - (reg[0] * X).sum(axis=1)
 
 
 if __name__ == '__main__':
     A = HighFrequencyDistributionFactor()
     res = A.Distribution007_data_raw(minute=10, n=1)
     A.Distribution007(res)
-    pass

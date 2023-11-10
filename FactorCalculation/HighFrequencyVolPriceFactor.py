@@ -434,10 +434,7 @@ class HighFrequencyVolPriceFactor(FactorBase):
                                stock_id='code')
         data.rename(columns={'code': 'stock_id'}, inplace=True)
 
-        # 2h 数据存在异常
-        data_s = data[~((data['2hPrice'] == 0) | (np.isnan(data['2hPrice'])))]
-
-        return data_s
+        return data[~((data['2hPrice'] == 0) | (np.isnan(data['2hPrice'])))]
 
     @classmethod
     def VolPrice018_data_raw(cls,
@@ -630,10 +627,11 @@ class HighFrequencyVolPriceFactor(FactorBase):
         data_copy.sort_values('S', ascending=False, inplace=True)
         data_copy['cum_volume_R'] = data_copy[PVN.VOLUME.value].cumsum() / (data_copy[PVN.VOLUME.value]).sum()
         data_copy_ = data_copy[data_copy['cum_volume_R'] <= 0.2]
-        res = (data_copy_[PVN.CLOSE.value] * data_copy_[PVN.VOLUME.value] / (
-            data_copy_[PVN.VOLUME.value]).sum()).sum() / VWAP
-
-        return res
+        return (
+            data_copy_[PVN.CLOSE.value]
+            * data_copy_[PVN.VOLUME.value]
+            / (data_copy_[PVN.VOLUME.value]).sum()
+        ).sum() / VWAP
 
     @staticmethod
     def func_M_sqrt(data: pd.DataFrame):
@@ -644,10 +642,11 @@ class HighFrequencyVolPriceFactor(FactorBase):
         data_copy.sort_values('S', ascending=False, inplace=True)
         data_copy['cum_volume_R'] = data_copy[PVN.VOLUME.value].cumsum() / (data_copy[PVN.VOLUME.value]).sum()
         data_copy_ = data_copy[data_copy['cum_volume_R'] <= 0.2]
-        res = (data_copy_[PVN.CLOSE.value] * data_copy_[PVN.VOLUME.value] / (
-            data_copy_[PVN.VOLUME.value]).sum()).sum() / VWAP
-
-        return res
+        return (
+            data_copy_[PVN.CLOSE.value]
+            * data_copy_[PVN.VOLUME.value]
+            / (data_copy_[PVN.VOLUME.value]).sum()
+        ).sum() / VWAP
 
     @staticmethod
     def _reg(d: pd.DataFrame,
@@ -657,19 +656,14 @@ class HighFrequencyVolPriceFactor(FactorBase):
         d_sub_ = d.dropna(how='any').sort_index()
 
         if d_sub_.shape[0] < d_sub_.shape[1]:
-            Residual = pd.Series(data=np.nan, index=d.index)
-        else:
-            X, Y = d_sub_[x_name].to_frame(), d_sub_[y_name]
-            reg = np.linalg.lstsq(X, Y)
-            Residual = Y - (reg[0] * X).sum(axis=1)
-        return Residual
+            return pd.Series(data=np.nan, index=d.index)
+        X, Y = d_sub_[x_name].to_frame(), d_sub_[y_name]
+        reg = np.linalg.lstsq(X, Y)
+        return Y - (reg[0] * X).sum(axis=1)
 
     @staticmethod
     def weight_attenuation(n: int = 5):
-        W_sum = sum(i for i in range(1, n + 1))
-        W = [i / W_sum for i in range(1, n + 1)]
-        return W
+        W_sum = sum(range(1, n + 1))
+        return [i / W_sum for i in range(1, n + 1)]
 
 
-if __name__ == '__main__':
-    pass

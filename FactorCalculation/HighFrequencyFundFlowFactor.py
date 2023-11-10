@@ -1410,8 +1410,7 @@ class HighFrequencyFundFlowFactor(FactorBase):
         data_copy = data.copy(deep=True)
         # 注意时间切片：左闭右开
         data_copy_sub = data_copy[(data_copy['time'] >= time_star) & (data_copy['time'] < time_end)]
-        res = data_copy_sub['volume'].sum() / data_copy['volume'].sum()
-        return res
+        return data_copy_sub['volume'].sum() / data_copy['volume'].sum()
 
     # 半衰权重
     @staticmethod
@@ -1420,9 +1419,7 @@ class HighFrequencyFundFlowFactor(FactorBase):
 
         weight_list = [pow(2, (i - period - 1) / decay) for i in range(1, period + 1)]
 
-        weight_1 = [i / sum(weight_list) for i in weight_list]
-
-        return weight_1
+        return [i / sum(weight_list) for i in weight_list]
 
     @staticmethod
     def W_cut(d: pd.DataFrame,
@@ -1432,7 +1429,7 @@ class HighFrequencyFundFlowFactor(FactorBase):
         print(d.index[0][1])
         d['ret_cum'] = d[cut_name].rolling(n).sum()
         for i in range(1, n):
-            d[rank_name + f"_{i}"] = d[rank_name].shift(i)
+            d[f"{rank_name}_{i}"] = d[rank_name].shift(i)
 
         C = [c_ for c_ in d.columns if rank_name in c_]
         J = d[C].ge(d[C].median(axis=1), axis=0)
@@ -1448,5 +1445,3 @@ class HighFrequencyFundFlowFactor(FactorBase):
         return d[['M_high', 'M_low']]
 
 
-if __name__ == '__main__':
-    pass

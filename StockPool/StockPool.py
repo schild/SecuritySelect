@@ -21,7 +21,6 @@ class StockPool(object):
 
     def __init__(self):
         self.index_list = []
-        pass
 
     # ST股标识
     def ST(self,

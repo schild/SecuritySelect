@@ -83,9 +83,10 @@ class FactorBase(object):
                   file_name: str = "FactorPool1",
                   date: str = KN.TRADE_DATE.value,
                   stock_id: str = KN.STOCK_ID.value):
-        res = pd.read_csv(os.path.join(file_path, file_name + '.csv'),
-                          usecols=[date, stock_id] + data_name)
-        return res
+        return pd.read_csv(
+            os.path.join(file_path, f'{file_name}.csv'),
+            usecols=[date, stock_id] + data_name,
+        )
 
     # 读取指数数据
     def csv_index(self,
@@ -94,10 +95,11 @@ class FactorBase(object):
                   file_name: str = 'IndexInfo',
                   index_name: str = '',
                   date: str = KN.TRADE_DATE.value,):
-        index_data = pd.read_csv(os.path.join(file_path, file_name + '.csv'),
-                                 usecols=[date, 'index_name'] + data_name)
-        res = index_data[index_data['index_name'] == index_name]
-        return res
+        index_data = pd.read_csv(
+            os.path.join(file_path, f'{file_name}.csv'),
+            usecols=[date, 'index_name'] + data_name,
+        )
+        return index_data[index_data['index_name'] == index_name]
 
     # 读取分钟数据(数据不在一个文件夹中)，返回回调函数结果
     def csv_HFD_data(self,
@@ -106,7 +108,7 @@ class FactorBase(object):
                      fun_kwargs: dict = {},
                      file_path: str = FPN.HFD_Stock_M.value,
                      sub_file: str = '') -> Dict[str, Any]:
-        if sub_file == '':
+        if not sub_file:
             Path = file_path
         elif sub_file == '1minute':
             Path = FPN.HFD_Stock_M.value
@@ -138,8 +140,10 @@ class FactorBase(object):
         """
 
         def _pros_ttm(data_sub: pd.DataFrame, name_: str):
-            data_sub[name_ + '_TTM'] = data_sub[name_].diff(1)
-            res_ = data_sub[data_sub['M'] == '03'][name_].append(data_sub[data_sub['M'] != '03'][name_ + '_TTM'])
+            data_sub[f'{name_}_TTM'] = data_sub[name_].diff(1)
+            res_ = data_sub[data_sub['M'] == '03'][name_].append(
+                data_sub[data_sub['M'] != '03'][f'{name_}_TTM']
+            )
             res_ = res_.droplevel(level=KN.STOCK_ID.value).sort_index().rolling(4).sum()
             return res_
 

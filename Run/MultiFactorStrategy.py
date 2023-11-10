@@ -76,7 +76,7 @@ class GetData(object):
                 factor_container.append(factor_data[factor_name[:-4]])
 
             if not factor_container:
-                print(f"No factor data in folder!")
+                print("No factor data in folder!")
             else:
                 factors = pd.concat(factor_container, axis=1)  # 因子数据外连接
         except FileNotFoundError:
@@ -86,8 +86,7 @@ class GetData(object):
 
     # 有效个股
     def get_effect_stock(self) -> pd.Index:
-        stock_index = self.SP.StockPool1()
-        return stock_index
+        return self.SP.StockPool1()
 
     # 指数各行业市值
     def get_index_mv(self,
@@ -145,10 +144,13 @@ class GetData(object):
         if os.listdir(res_path):
             try:
                 csv_list = os.listdir(res_path)
-                res = {}
-                for csv_name in csv_list:
-                    res[csv_name[:-4]] = pd.read_csv(os.path.join(res_path, csv_name),
-                                                     index_col=[KN.TRADE_DATE.value, KN.STOCK_ID.value])
+                res = {
+                    csv_name[:-4]: pd.read_csv(
+                        os.path.join(res_path, csv_name),
+                        index_col=[KN.TRADE_DATE.value, KN.STOCK_ID.value],
+                    )
+                    for csv_name in csv_list
+                }
             except Exception as e:
                 print(f"Read file error: {e}")
                 res = {}
@@ -418,8 +420,6 @@ class Strategy(object):
                                    'fun': lambda w: sum(w) - 1})
 
                 R = R.reindex(ind_M.index)
-                pass
-
             # 权重边界设定
             if bounds == '01':
                 self.bonds = ((0., 1.),) * R.shape[0]
@@ -454,14 +454,6 @@ class Strategy(object):
             # Instantiate OPT method
             opt = OptimizeLinear()
 
-            # Set the constraint
-            if _const is not None and 'stock' in _const:
-                # up = self.stock_weight_down.loc[index_, :].reindex(COV.index)
-                # down = self.stock_weight_up.loc[index_, :].reindex(COV.index)
-
-                # self.bonds = tuple(zip(up, down))
-                # self.limit.append({'type': 'eq', 'fun': lambda w: sum(w)})
-                pass
             if _const is not None and 'ind_weight' in _const:
                 ind_ = pd.concat([self.OPT_params['IND_WEIGHT'][index_], self.OPT_params['IND_EXP'][index_]],
                                  axis=1,
@@ -578,22 +570,25 @@ class Strategy(object):
         data_copy = data_copy[columns_ef].dropna()  # 个股数据不足剔除
 
         if not {PVN.LIQ_MV.value, KN.STOCK_RETURN.value, SN.INDUSTRY_FLAG.value}.issubset(columns_ef) \
-                or {PVN.LIQ_MV.value, KN.STOCK_RETURN.value, SN.INDUSTRY_FLAG.value}.issuperset(columns_ef) \
-                or data_copy.shape[0] <= sample_length:
-            res = type('res', (object,), dict(params=pd.Series(index=self.fact_name),
-                                              resid=pd.Series(index=data_copy.index)))
-        else:
-            X = pd.get_dummies(
-                data_copy.loc[:, data_copy.columns.difference([PVN.LIQ_MV.value, KN.STOCK_RETURN.value])],
-                columns=[SN.INDUSTRY_FLAG.value], prefix='', prefix_sep='')
+                    or {PVN.LIQ_MV.value, KN.STOCK_RETURN.value, SN.INDUSTRY_FLAG.value}.issuperset(columns_ef) \
+                    or data_copy.shape[0] <= sample_length:
+            return type(
+                'res',
+                (object,),
+                dict(
+                    params=pd.Series(index=self.fact_name),
+                    resid=pd.Series(index=data_copy.index),
+                ),
+            )
+        X = pd.get_dummies(
+            data_copy.loc[:, data_copy.columns.difference([PVN.LIQ_MV.value, KN.STOCK_RETURN.value])],
+            columns=[SN.INDUSTRY_FLAG.value], prefix='', prefix_sep='')
 
-            Y = data_copy[KN.STOCK_RETURN.value]
+        Y = data_copy[KN.STOCK_RETURN.value]
 
-            W = data_copy[PVN.LIQ_MV.value]
+        W = data_copy[PVN.LIQ_MV.value]
 
-            res = sm.WLS(Y, X, weights=W).fit()  # 流通市值加权最小二乘法
-
-        return res
+        return sm.WLS(Y, X, weights=W).fit()
 
     # 考虑路径依赖，多路径取平均
     def multi_path_ret(self,
@@ -627,11 +622,7 @@ class Strategy(object):
                 path_ = (weight_copy * ret_df.loc[weight_copy.index, weight_copy.columns]).sum(axis=1)
                 path_list.append(path_[:last_date])
 
-        # 取平均
-        res_ = reduce(lambda x, y: x + y, path_list).div(self.hp)
-        # m = pd.concat(path_list, axis=1)
-        # m.to_csv("C:\\Users\\Administrator\\Desktop\\Test\\单约束.csv")
-        return res_
+        return reduce(lambda x, y: x + y, path_list).div(self.hp)
 
     def main(self):
         # 因子预处理
@@ -653,7 +644,6 @@ class Strategy(object):
 
         # NAV
         self.Nav()
-        pass
 
     @staticmethod
     def _holding_return(ret: pd.Series,
@@ -700,5 +690,4 @@ if __name__ == '__main__':
     except Exception as e:
         # send_email(email, "迭代出错！", "")
         print(e)
-        pass
     print("s")

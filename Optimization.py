@@ -45,7 +45,6 @@ class MaxOptModel(ABC):
             return self.object_func2
         elif obj_type == 'MAX_RET/RISK':
             return self.object_func3
-        pass
 
     # 目标函数
     def object_func1(self, w):
@@ -54,24 +53,23 @@ class MaxOptModel(ABC):
         :param w:
         :return:
         """
-        func = - np.dot(w, np.array(self.data_mean))
-        return func
+        return - np.dot(w, np.array(self.data_mean))
 
     def object_func2(self, w):
         """
         :param w:
         :return:
         """
-        func = np.dot(w, np.dot(w, np.array(self.data_cov)))
-        return func
+        return np.dot(w, np.dot(w, np.array(self.data_cov)))
 
     def object_func3(self, w):
         """
         :param w:
         :return:
         """
-        func = - np.dot(w, np.array(self.data_mean)) / np.sqrt(np.dot(w, np.dot(w, np.array(self.data_cov))))
-        return func
+        return -np.dot(w, np.array(self.data_mean)) / np.sqrt(
+            np.dot(w, np.dot(w, np.array(self.data_cov)))
+        )
 
     # 约束条件
     def _constraint(self):
@@ -131,7 +129,6 @@ class OptimizeSLSQP(object):
             return self.object_func2
         elif obj_type == 'MAX_RET/RISK':
             return self.object_func3
-        pass
 
     # 目标函数
     def object_func1(self, w):
@@ -140,24 +137,23 @@ class OptimizeSLSQP(object):
         :param w:
         :return:
         """
-        func = - np.dot(w, np.array(self.data_mean))
-        return func
+        return - np.dot(w, np.array(self.data_mean))
 
     def object_func2(self, w):
         """
         :param w:
         :return:
         """
-        func = np.dot(w, np.dot(w, np.array(self.data_cov)))
-        return func
+        return np.dot(w, np.dot(w, np.array(self.data_cov)))
 
     def object_func3(self, w):
         """
         :param w:
         :return:
         """
-        func = - np.dot(w, np.array(self.data_mean)) / np.sqrt(np.dot(w, np.dot(w, np.array(self.data_cov))))
-        return func
+        return -np.dot(w, np.array(self.data_mean)) / np.sqrt(
+            np.dot(w, np.dot(w, np.array(self.data_cov)))
+        )
 
     # 约束条件
     def _constraint(self):
@@ -253,17 +249,16 @@ class OptimizeLinear(object):
             M_eq, M_ineq, b_eq, b_ineq = self.Const()
             if M_eq is None:
                 return
-            else:
-                # simple method
-                # sta = time.time()
-                solution = linprog(self.obj,
-                                   M_ineq, b_ineq, M_eq, b_eq,
-                                   bounds=self.bonds,
-                                   options={"maxiter": self.maxiter,
-                                            "disp": False})
-                if not solution.success:
-                    print("Optimization of failure")
-                return solution
+            # simple method
+            # sta = time.time()
+            solution = linprog(self.obj,
+                               M_ineq, b_ineq, M_eq, b_eq,
+                               bounds=self.bonds,
+                               options={"maxiter": self.maxiter,
+                                        "disp": False})
+            if not solution.success:
+                print("Optimization of failure")
+            return solution
         else:
             print("Please input object function coefficient!")
             return None

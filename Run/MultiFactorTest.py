@@ -39,18 +39,18 @@ def Multiple_factor_test(fact_dicts: dict, process: dict, hp):
             A.load_factor(**fact_p)
 
             # integration data and process factor
-            print(f"因子处理和数据整合")
+            print("因子处理和数据整合")
             A.integration(**process)
 
             # Factor validity test
             print(f"开始测试因子：{fact}")
             A.effectiveness(ret_period=hp, save=True)
 
-            # send_email(email, f'{fact}因子检验没有问题', f'{fact}因子检验没有问题')
+                    # send_email(email, f'{fact}因子检验没有问题', f'{fact}因子检验没有问题')
         except Exception as e:
             send_email(email, f'{fact}因子检验存在问题', e.__str__())
-            print(">" * 40 + "time:{}".format(time.ctime()) + "<" * 40)
-        # time.sleep(60)
+            print(">" * 40 + f"time:{time.ctime()}" + "<" * 40)
+            # time.sleep(60)
     print('Over!')
 
 
@@ -97,33 +97,29 @@ if __name__ == '__main__':
     #     FCN.EQ.value: ['CSR', 'CSRD', 'APR', 'APRD']
     # }
     s = 0
+    s = 1
     while True:
-        if True:
         # if dt.datetime.now() > dt.datetime(2020, 10, 22, 7, 30) and s == 0:#  dt.datetime.now() > dt.datetime(2020, 10, 22, 7, 30)
-            send_email(email, "开始进行因子有效性检验", f'{dt.datetime.now()}')
-            for fact_c, fact_names in factors_name.items():
-                fact_dict = {}
-                for fact_name in fact_names:
-                    if fact_name in ['EP_ttm']:
-                        continue
-                    # if fact_c in ['估值', '成长'] or fact_name in ['BPS_G_LR', 'EPS_G_ttm']:
-                    #     continue
-                    factor_p = {"fact_name": fact_name,
-                                "factor_category": fact_c,
-                                "factor_params": {"switch": False},
-                                'db': 'Fin',
-                                'factor_value': None,
-                                'cal': False}
+        send_email(email, "开始进行因子有效性检验", f'{dt.datetime.now()}')
+        for fact_c, fact_names in factors_name.items():
+            fact_dict = {}
+            for fact_name in fact_names:
+                if fact_name in ['EP_ttm']:
+                    continue
+                # if fact_c in ['估值', '成长'] or fact_name in ['BPS_G_LR', 'EPS_G_ttm']:
+                #     continue
+                factor_p = {"fact_name": fact_name,
+                            "factor_category": fact_c,
+                            "factor_params": {"switch": False},
+                            'db': 'Fin',
+                            'factor_value': None,
+                            'cal': False}
 
-                    factor_process = {"outliers": '',  # mad
-                                      "neu": '',  # mv+industry
-                                      "stand": '',  # mv
-                                      "switch_freq": False,
-                                      "limit": 120}
-                    fact_dict[fact_name] = factor_p
+                factor_process = {"outliers": '',  # mad
+                                  "neu": '',  # mv+industry
+                                  "stand": '',  # mv
+                                  "switch_freq": False,
+                                  "limit": 120}
+                fact_dict[fact_name] = factor_p
 
-                Multiple_factor_test(fact_dict, factor_process, hp=6)
-            s = 1
-        else:
-            print('Cycle')
-            time.sleep(60 * 10)
+            Multiple_factor_test(fact_dict, factor_process, hp=6)

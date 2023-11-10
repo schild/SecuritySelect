@@ -157,7 +157,7 @@ class FundamentalSolvencyFactor(FactorBase):
         # 短期偿债能力指标
         ShortDebt1_CFPA = data[[currency, tradable_asset, op_net_cash_flow]].sum(skipna=True,
                                                                                  axis=1) / \
-                          data[[short_borrow, short_bond_payable, short_iliq_liability_1y]].sum(skipna=True,
+                              data[[short_borrow, short_bond_payable, short_iliq_liability_1y]].sum(skipna=True,
                                                                                                 axis=1)
 
         # switch inf to Nan
@@ -165,11 +165,7 @@ class FundamentalSolvencyFactor(FactorBase):
 
         data[func_name] = ShortDebt1_CFPA.groupby(KN.STOCK_ID.value).apply(lambda x: x.diff(1) / abs(x.shift(1)))
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -215,18 +211,14 @@ class FundamentalSolvencyFactor(FactorBase):
         # 短期偿债能力指标
         ShortDebt1_CFPA = data[[currency, tradable_asset, op_net_cash_flow]].sum(skipna=True,
                                                                                  axis=1) / \
-                          data[[short_borrow, short_bond_payable, short_iliq_liability_1y]].sum(skipna=True,
+                              data[[short_borrow, short_bond_payable, short_iliq_liability_1y]].sum(skipna=True,
                                                                                                 axis=1)
         data[func_name] = ShortDebt1_CFPA.groupby(KN.STOCK_ID.value).apply(lambda x: - abs(x.diff(1) / abs(x.shift(1))))
 
         # switch inf to Nan
         data[func_name][np.isinf(data[func_name])] = np.nan
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -274,18 +266,14 @@ class FundamentalSolvencyFactor(FactorBase):
         # 短期偿债能力指标
         ShortDebt1_CFPA = data[[currency, tradable_asset, op_net_cash_flow]].sum(skipna=True,
                                                                                  axis=1) / \
-                          data[[short_borrow, short_bond_payable, short_iliq_liability_1y]].sum(skipna=True,
+                              data[[short_borrow, short_bond_payable, short_iliq_liability_1y]].sum(skipna=True,
                                                                                                 axis=1)
 
         # switch inf to Nan
         ShortDebt1_CFPA[np.isinf(ShortDebt1_CFPA)] = np.nan
         data[func_name] = ShortDebt1_CFPA.groupby(KN.STOCK_ID.value).apply(lambda x: - x.rolling(quarter).std())
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -398,11 +386,7 @@ class FundamentalSolvencyFactor(FactorBase):
         ShortDebt2_CFPA[np.isinf(ShortDebt2_CFPA)] = np.nan
         data[func_name] = ShortDebt2_CFPA.groupby(KN.STOCK_ID.value).apply(lambda x: x.diff(1) / abs(x.shift(1)))
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -458,11 +442,7 @@ class FundamentalSolvencyFactor(FactorBase):
         # switch inf to Nan
         data[func_name][np.isinf(data[func_name])] = np.nan
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -572,11 +552,7 @@ class FundamentalSolvencyFactor(FactorBase):
         # switch inf to Nan
         data[func_name][np.isinf(data[func_name])] = np.nan
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()
@@ -628,11 +604,7 @@ class FundamentalSolvencyFactor(FactorBase):
         # switch inf to Nan
         data[func_name][np.isinf(data[func_name])] = np.nan
 
-        if switch:
-            data_fact = cls()._switch_freq(data_=data, name=func_name)
-        else:
-            data_fact = None
-
+        data_fact = cls()._switch_freq(data_=data, name=func_name) if switch else None
         data = data.reset_index()
 
         F = FactorInfo()

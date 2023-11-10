@@ -37,16 +37,14 @@ class FactorProcess(object):
 
         self.fact_name = data.name
 
+        if method is None:
+            return data
         method_dict = {
             "before_after_3%": self.before_after_n,
             "before_after_3sigma": self.before_after_3sigma,
             "mad": self.mad
         }
-        if method is None:
-            return data
-        else:
-            res = data.groupby(KN.TRADE_DATE.value).apply(method_dict[method])
-            return res
+        return data.groupby(KN.TRADE_DATE.value).apply(method_dict[method])
 
     # *中性化*
     def neutralization(self,
@@ -134,8 +132,9 @@ class FactorProcess(object):
         else:
             stand_data = data
 
-        res = stand_data.groupby(KN.TRADE_DATE.value, group_keys=False).apply(method_dict[method])
-        return res
+        return stand_data.groupby(KN.TRADE_DATE.value, group_keys=False).apply(
+            method_dict[method]
+        )
 
     # # *正交化*
     # @staticmethod
@@ -260,13 +259,11 @@ class FactorProcess(object):
         """
         miu = data.mean()
         sigma = data.std()
-        stand = (data - miu) / sigma
-        return stand
+        return (data - miu) / sigma
 
     @staticmethod
     def range01(data: pd.Series):
-        result = (data - data.min()) / (data.max() - data.min())
-        return result
+        return (data - data.min()) / (data.max() - data.min())
 
     # 市值加权标准化
     def market_value_weighting(self, data) -> pd.Series:
@@ -343,8 +340,7 @@ class Multicollinearity(object):
             """
             mean = np.array(self.data.mean())
             cov = np.array(self.data.cov())  # 协方差
-            func = - np.dot(w, mean) / np.sqrt(np.dot(w, np.dot(w, cov)))
-            return func
+            return - np.dot(w, mean) / np.sqrt(np.dot(w, np.dot(w, cov)))
 
         # 约束条件
         def _constraint1(self, w, **kwargs):
@@ -352,8 +348,7 @@ class Multicollinearity(object):
 
         # 约束条件函数集
         def _constraints(self, **kwargs):
-            limit = {'type': 'eq', 'fun': self._constraint1}
-            return limit
+            return {'type': 'eq', 'fun': self._constraint1}
 
     def __init__(self):
         self.fp = FactorProcess()
@@ -369,14 +364,15 @@ class Multicollinearity(object):
         df_cor = data.groupby(KN.TRADE_DATE.value).apply(lambda x: x.dropna().corr())
 
         cor_GroupBy = df_cor.groupby(pd.Grouper(level=-1))
-        cor_dict = {"cor": df_cor,
-                    "mean": cor_GroupBy.mean(),
-                    "median": cor_GroupBy.median(),
-                    "std": cor_GroupBy.std(),
-                    "ttest": cor_GroupBy.apply(lambda x: (abs(x) - x.mean()) / x.std() * pow(len(x) - 1, 0.5)),
-                    }
-
-        return cor_dict
+        return {
+            "cor": df_cor,
+            "mean": cor_GroupBy.mean(),
+            "median": cor_GroupBy.median(),
+            "std": cor_GroupBy.std(),
+            "ttest": cor_GroupBy.apply(
+                lambda x: (abs(x) - x.mean()) / x.std() * pow(len(x) - 1, 0.5)
+            ),
+        }
 
     # 因子复合
     def composite(self,
@@ -395,8 +391,7 @@ class Multicollinearity(object):
                        "Ret": self.return_weight,
                        "MAX_IC": self.MAX_IC_IR}
 
-        res = method_dict[method](factor, **kwargs)
-        return res
+        return method_dict[method](factor, **kwargs)
 
     """因子合成"""
 
@@ -404,8 +399,9 @@ class Multicollinearity(object):
     @staticmethod
     def equal_weight(fact: pd.DataFrame,
                      **kwargs):
-        fact_comp = fact.groupby(KN.TRADE_DATE.value, group_keys=False).apply(lambda x: x.mean(axis=1))
-        return fact_comp
+        return fact.groupby(KN.TRADE_DATE.value, group_keys=False).apply(
+            lambda x: x.mean(axis=1)
+        )
 
     # TODO Test
     def return_weight(self,
@@ -432,10 +428,7 @@ class Multicollinearity(object):
         fact_weight_std = fact_weight.div(fact_weight.sum(axis=1), axis=0)
         # 权重与因子值匹配
         fact_weight_std = fact_weight_std.shift(hp + 1)  # TODO 不同的价格平移周期不一样
-        # 复合因子
-        fact_comp = fact.mul(fact_weight_std).sum(axis=1)
-
-        return fact_comp
+        return fact.mul(fact_weight_std).sum(axis=1)
 
     # def IC_weight(self,
     #               fact: pd.DataFrame,
@@ -555,15 +548,13 @@ class Multicollinearity(object):
                 rp: int = 60,
                 algorithm: str = 'mean') -> [pd.DataFrame, None]:
 
-        if algorithm == 'mean':
-            data_weight = data.rolling(rp).mean()
-        elif algorithm == 'Half_time':
+        if algorithm == 'Half_time':
             weight_list = self._Half_time(rp)
-            data_weight = data.rolling(rp).apply(lambda x: np.dot(x, weight_list))
+            return data.rolling(rp).apply(lambda x: np.dot(x, weight_list))
+        elif algorithm == 'mean':
+            return data.rolling(rp).mean()
         else:
-            data_weight = None
-
-        return data_weight
+            return None
 
     # 半衰权重
     @staticmethod
@@ -571,9 +562,7 @@ class Multicollinearity(object):
 
         weight_list = [pow(2, (i - period - 1) / decay) for i in range(1, period + 1)]
 
-        weight_1 = [i / sum(weight_list) for i in weight_list]
-
-        return weight_1
+        return [i / sum(weight_list) for i in weight_list]
 
 
 if __name__ == '__main__':
@@ -581,13 +570,3 @@ if __name__ == '__main__':
     data_array = np.random.rand(1000).reshape(200, 5)
     IC = pd.DataFrame(data_array)
     A.PCA(IC)
-    # A.neutralization('s', method='industry+mv')
-    # df_stock = pd.read_csv("D:\\Quant\\SecuritySelect\\Data\\AStockData.csv")
-    #
-    # # Data cleaning:Restoration stock price [open, high, low, close]
-    # price_columns = ['open', 'close', 'high', 'low']
-    # df_stock[price_columns] = df_stock[price_columns].multiply(df_stock['adjfactor'], axis=0)
-    #
-    # A = FactorProcessing()
-    # A.remove_outliers(df_stock['close'])
-    pass

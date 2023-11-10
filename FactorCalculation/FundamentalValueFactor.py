@@ -1030,8 +1030,3 @@ class FundamentalValueFactor(FactorBase):
         return res
 
 
-if __name__ == '__main__':
-    # A = FinancialValuationFactor()
-    # m = A.EP_ttm_data_raw()
-    # A.EP_ttm(data=m)
-    pass

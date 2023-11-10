@@ -758,7 +758,6 @@ class GeneticFactor(object):
         return result
 
     @staticmethod
-    # 快速获取最大值下标算法
     def max_index(s: pd.Series, n: int = 5):
         """
         找最大值下标
@@ -769,28 +768,22 @@ class GeneticFactor(object):
         if len(s.dropna()) < 5:
             return pd.Series(index=s.index)
 
-        cont = []
-        for i in range(0, n):
-            cont.append(s.shift(i))
+        cont = [s.shift(i) for i in range(0, n)]
         k = pd.concat(cont, axis=1)
         k.columns = [n - i + 1 for i in range(1, n + 1)]
         m = k.T.idxmax()
         # 前n-1个不进行比较
-        m[0: n - 1] = np.nan
+        m[:n - 1] = np.nan
         return m
 
     @staticmethod
-    # 快速获取排名算法
     def rank_(se: pd.Series, n: int):
 
         if len(se.dropna()) < 5:
             return pd.Series(index=se.index)
-        r = 1
-        for i in range(1, n):
-            r += se > se.shift(i)
-
+        r = 1 + sum(se > se.shift(i) for i in range(1, n))
         # 无效排名附为空值
-        r[0: n - 1] = np.nan
+        r[:n - 1] = np.nan
         return r
 
     def merge_factor(self, data):
@@ -801,17 +794,19 @@ class GeneticFactor(object):
         for method_name in class_method_sub:
 
             # 过滤静态方法和本函数
-            if method_name == sys._getframe().f_code.co_name or method_name in ['alpha125_genetic_HTZZ',
-                                                                                'alpha12_genetic_HTZZ']:
+            if method_name in [
+                sys._getframe().f_code.co_name,
+                'alpha125_genetic_HTZZ',
+                'alpha12_genetic_HTZZ',
+            ]:
                 continue
 
             method_ = self.__getattribute__(method_name)
             if inspect.ismethod(method_):
-                print("开始计算因子{}".format(method_name))
+                print(f"开始计算因子{method_name}")
                 res_ = method_(data=copy.deepcopy(data))
                 factor_container.append(res_)
-        result = pd.concat(factor_container, axis=1)
-        return result
+        return pd.concat(factor_container, axis=1)
 
 
 if __name__ == '__main__':

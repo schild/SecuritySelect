@@ -35,21 +35,16 @@ class LabelPool(object):
         :return:
         """
         stock_price.sort_index(inplace=True)
-        if label:
-            if return_type == PVN.OPEN.value:
-                result = stock_price[return_type].groupby(as_index=True,
-                                                          level=KN.STOCK_ID.value).apply(
-                    lambda x: x.shift(-2) / x.shift(-1) - 1)
-            else:
-                result = stock_price[return_type].groupby(as_index=True,
-                                                          level=KN.STOCK_ID.value).apply(lambda x: x.shift(-1) / x - 1)
+        if label and return_type == PVN.OPEN.value:
+            result = stock_price[return_type].groupby(as_index=True,
+                                                      level=KN.STOCK_ID.value).apply(
+                lambda x: x.shift(-2) / x.shift(-1) - 1)
+        elif label or return_type == PVN.OPEN.value:
+            result = stock_price[return_type].groupby(as_index=True,
+                                                      level=KN.STOCK_ID.value).apply(lambda x: x.shift(-1) / x - 1)
         else:
-            if return_type == PVN.OPEN.value:
-                result = stock_price[return_type].groupby(as_index=True,
-                                                          level=KN.STOCK_ID.value).apply(lambda x: x.shift(-1) / x - 1)
-            else:
-                result = stock_price[return_type].groupby(as_index=True,
-                                                          level=KN.STOCK_ID.value).apply(lambda x: x / x.shift(1) - 1)
+            result = stock_price[return_type].groupby(as_index=True,
+                                                      level=KN.STOCK_ID.value).apply(lambda x: x / x.shift(1) - 1)
 
         result = round(result, 6)
         result.name = KN.STOCK_RETURN.value + '_' + return_type
@@ -110,9 +105,7 @@ class LabelPool(object):
         :return:
         """
 
-        res = pd.concat(kwargs.values(), axis=1)
-
-        return res
+        return pd.concat(kwargs.values(), axis=1)
 
     def LabelPool1(self):
 
@@ -187,8 +180,7 @@ class LabelPool(object):
         sql_ = self.Q.stock_index_SQL(bm_index=bm_index, date_sta=sta, date_end=end)
         index_ = self.Q.query(sql_)
         index_.set_index(KN.TRADE_DATE.value, inplace=True)
-        result = index_[price].shift(-1) / index_[price] - 1
-        return result
+        return index_[price].shift(-1) / index_[price] - 1
 
 
 if __name__ == '__main__':
@@ -202,4 +194,3 @@ if __name__ == '__main__':
 
     A = LabelPool()
     A.LabelPool1()
-    pass

@@ -13,9 +13,7 @@ class FactorPool(object):
         """
         factor_folder = os.path.dirname(os.path.abspath(__file__))
         Factor_class = self.load_factor_class_from_folder(factor_folder)
-        Factor_function = self.load_factor_function_from_class(Factor_class)
-        # self.load_strategy_class_from_folder(path2, "strategies")
-        return Factor_function
+        return self.load_factor_function_from_class(Factor_class)
 
     # 导入因子类
     def load_factor_class_from_folder(self, path: str):
@@ -29,7 +27,7 @@ class FactorPool(object):
                 if filename.startswith('__'):
                     continue
                 class_name = filename[:-3]
-                module = importlib.import_module("FactorCalculation." + class_name)
+                module = importlib.import_module(f"FactorCalculation.{class_name}")
                 for class_name in dir(module):
                     value = getattr(module, class_name)
                     if isinstance(value, type):

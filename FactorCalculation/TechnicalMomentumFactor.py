@@ -54,9 +54,7 @@ class TechnicalMomentFactor(FactorBase):
         data.set_index([KN.TRADE_DATE.value, KN.STOCK_ID.value], inplace=True)
         data.sort_index(inplace=True)
 
-        data[factor_name] = data[close_price].groupby(KN.STOCK_ID.value,
-                                                      group_keys=False).rolling(n).apply(
-            lambda x: 1 - (list(x).index(np.nanmax(x)) - 1) / len(x))
+        data[factor_name] = 1 - (list(x).index(np.nanmax(x)) - 1) / len(x)
 
         F = FactorInfo()
         F.data = data[factor_name]
@@ -444,9 +442,7 @@ class TechnicalMomentFactor(FactorBase):
         data.set_index([KN.TRADE_DATE.value, KN.STOCK_ID.value], inplace=True)
         data.sort_index(inplace=True)
 
-        data[factor_name] = data[price].groupby(KN.STOCK_ID.value,
-                                                group_keys=False).rolling(n).apply(
-            lambda x: 1 - (list(x).index(np.nanmin(x)) - 1) / len(x))
+        data[factor_name] = 1 - (list(x).index(np.nanmin(x)) - 1) / len(x)
 
         F = FactorInfo()
         F.data = data[factor_name]
@@ -642,8 +638,14 @@ class TechnicalMomentFactor(FactorBase):
         data_stock[PVN.CLOSE.value] = data_stock[PVN.CLOSE.value] * data_stock[PVN.ADJ_FACTOR.value]
         data_index.rename(columns={'close': 'index_close'}, inplace=True)
         data_raw = pd.merge(data_stock, data_index, on=['date'], how='left')
-        res = data_raw[[KN.TRADE_DATE.value, KN.STOCK_ID.value, PVN.CLOSE.value, 'index_close']]
-        return res
+        return data_raw[
+            [
+                KN.TRADE_DATE.value,
+                KN.STOCK_ID.value,
+                PVN.CLOSE.value,
+                'index_close',
+            ]
+        ]
 
     @classmethod  # TODO 行业指数
     def Momentum010_data_raw(cls) -> pd.DataFrame:
@@ -780,7 +782,7 @@ class TechnicalMomentFactor(FactorBase):
         if len(x_sub) / len(x) < 1 - ratio:
             return np.nan
         try:
-            X = pd.DataFrame({"T": [i for i in range(1, len(x_sub) + 1)]})
+            X = pd.DataFrame({"T": list(range(1, len(x_sub) + 1))})
             Y = pd.Series(x_sub)
             X = sm.add_constant(X)
             reg = sm.OLS(Y, X).fit()
@@ -792,13 +794,3 @@ class TechnicalMomentFactor(FactorBase):
             return alpha
 
 
-if __name__ == '__main__':
-    # df_stock = pd.read_csv("D:\\Quant\\SecuritySelect\\Data\\AStockData.csv")
-    #
-    # # Data cleaning:Restoration stock price [open, high, low, close]
-    # price_columns = ['open', 'close', 'high', 'low']
-    # df_stock.set_index('date', inplace=True)
-    # df_stock[price_columns] = df_stock[price_columns].multiply(df_stock['adjfactor'], axis=0)
-    # A = MomentFactor()
-    # A.momentum_in_day(df_stock)
-    pass
